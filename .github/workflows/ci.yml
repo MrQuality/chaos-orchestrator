@@ -4,12 +4,21 @@ on:
   pull_request:
 
 jobs:
-  build:
+  chaos-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # 1. The "Infrastructure": Spin up a temporary K3s cluster
+      # We use k3d (K3s in Docker).
+      - name: Setup K3s Cluster (K3d)
+        uses: nolar/setup-k3d-k3s@v1
+        with:
+          version: v1.26-k3s1
+          k3d-args: "--no-lb" # Lightweight mode, no load balancer needed for internal scripts
+
+      # 2. Prepare Python
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
@@ -19,3 +28,13 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r requirements.txt
+
+      # 3. Run the Chaos script
+      # Note: We set SSL Verify to TRUE here because K3d configures
+      # the certs correctly for the localhost context of the runner.
+      - name: Run Chaos Pod Enumeration
+        env:
+          KUBE_VERIFY_SSL: "True"
+          # nolar/setup-k3d-k3s automatically sets the KUBECONFIG env var for us
+        run: |
+          python chaos.py
