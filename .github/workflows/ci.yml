@@ -15,7 +15,7 @@ jobs:
       - name: Setup K3s Cluster (K3d)
         uses: nolar/setup-k3d-k3s@v1
         with:
-          version: v1.26
+          version: v1
           k3d-args: "--no-lb" # Lightweight mode, no load balancer needed for internal scripts
 
       # 2. Prepare Python
